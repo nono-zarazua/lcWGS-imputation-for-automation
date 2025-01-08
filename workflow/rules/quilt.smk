@@ -177,7 +177,7 @@ rule quilt_ligate_regular:
         ( \
         if [ {params.extra} -gt 0 ];then \
            echo {input} | tr ' ' '\n' > {output.lst} && \
-           bcftools concat --ligate --file-list {output.lst} --threads 4 -o {output.tmp} && \
+           bcftools concat --ligate --file-list {output.lst} --threads 4 -o {output.tmp} \
         ; else \
            echo {input} | tr ' ' '\n' > {output.lst} && \
            bcftools concat --file-list {output.lst} --threads 4 -o {output.tmp} \
