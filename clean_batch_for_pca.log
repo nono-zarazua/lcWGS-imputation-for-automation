@@ -1,0 +1,22 @@
+PLINK v2.0.0-a.6.9LM 64-bit Intel (29 Jan 2025)
+Options in effect:
+  --autosome
+  --extract /home/ec2-user/workdir/project-quilt-workdir/data/pruned/qc_pruning.prune.in
+  --make-pgen
+  --out clean_batch_for_pca
+  --set-all-var-ids @:#:$r:$a
+
+  --vcf quilt.down0x.mspbwt.genome.vcf.gz
+
+Hostname: ip-172-31-34-63.ec2.internal
+Working directory: /home/ec2-user/workdir/project-quilt-workdir
+Start time: Wed May 20 12:20:03 2026
+
+Random number seed: 1779279603
+15610 MiB RAM detected, ~14990 available; reserving 7805 MiB for main
+workspace.
+Using up to 8 compute threads.
+Error: Failed to open quilt.down0x.mspbwt.genome.vcf.gz : No such file or
+directory.
+
+End time: Wed May 20 12:20:03 2026

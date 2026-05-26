@@ -9,10 +9,6 @@ SAMPLES = (
     .to_dict(orient="index")
 )
 
-HISTORIC = (
-    
-)
-
 # dict : {"chr1": {"vcf": chr1.vcf.gz,"start":1, "end": 99999}, ...}
 REFPANEL = (
     pd.read_csv(os.path.abspath(config["genome"]["refpanel"]), sep="\t", dtype=str)
@@ -26,8 +22,7 @@ OUTDIR_PANEL = os.path.join(OUTDIR, "refpanels", "")
 OUTDIR_TRUTH = os.path.join(OUTDIR, "truth", "")
 OUTDIR_QUILT1 = os.path.join(OUTDIR, "quilt1", "")
 OUTDIR_QUILT1_REF = os.path.join(OUTDIR, "quilt1_prepare", "")
-RUN_NAME = config["run_name"]
-OUTDIR_QUILT2 = os.path.join(OUTDIR, "quilt2", RUN_NAME, "")
+OUTDIR_QUILT2 = os.path.join(OUTDIR, "quilt2", "")
 OUTDIR_QUILT2_REF = os.path.join(OUTDIR, "quilt2_prepare", "")
 OUTDIR_GLIMPSE = os.path.join(OUTDIR, "glimpse1", "")
 OUTDIR_GLIMPSE2 = os.path.join(OUTDIR, "glimpse2", "")
@@ -213,19 +208,13 @@ def get_quilt_regular_results():
 
 
 def get_quilt_mspbwt_results():
-    genome_targets = expand(
-        rules.quilt_concat_genome.output,
+    return expand(
+        rules.quilt_ligate_mspbwt.output,
+        chrom=config["chroms"],
         size=config["refsize"],
         depth=config["downsample"],
     )
 
-    split_targets = expand(
-        rules.quilt_split_by_sample.output,
-        size=config["refsize"],
-        sample=SAMPLES
-    )
-    
-    return genome_targets + split_targets
 
 def get_glimpse_results():
     return expand(
@@ -380,8 +369,6 @@ def get_quilt_mspbwt_outputs(wildcards):
     ids = list(map(str, d.keys()))
     return expand(rules.quilt_run_mspbwt.output, chunkid=ids, allow_missing=True)
 
-def get_quilt_genome_inputs(wildcards):
-    return expand(rules.quilt_ligate_mspbwt.output.vcf, chrom=config["chroms"], size=wildcards.size, depth=wildcards.depth )
 
 def collect_quilt_regular_logs(wildcards):
     d = get_refpanel_chunks(wildcards.chrom)

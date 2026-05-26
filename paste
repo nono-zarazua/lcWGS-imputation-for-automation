@@ -1,0 +1,3 @@
+(base) [ec2-user@ip-172-31-34-63 project-quilt-workdir]$ ./run.sh
+RuleException in file /home/ec2-user/workdir/project-quilt-workdir/workflow/rules/quilt.smk, line 502:
+Not all output, log and benchmark files of rule quilt_split_by_sample contain the same wildcards. This is crucial though, in order to avoid that two or more jobs write to the same file

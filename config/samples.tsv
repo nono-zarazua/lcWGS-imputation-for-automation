@@ -1,2 +1,6 @@
 sampleid	bam	depth
-NA12878	data/NA12878.bam	30
+B008-02_1	data/bams/corrida_20260513_1/B008-02_1.sorted.aligned.bam	0.35
+B008-03_1	data/bams/corrida_20260513_1/B008-03_1.sorted.aligned.bam	0.11
+B008-04_2	data/bams/corrida_20260513_1/B008-04_2.sorted.aligned.bam	0.08
+B008-07_2	data/bams/corrida_20260513_1/B008-07_2.sorted.aligned.bam	0.13
+B008-08_1	data/bams/corrida_20260513_1/B008-08_1.sorted.aligned.bam	0.36
