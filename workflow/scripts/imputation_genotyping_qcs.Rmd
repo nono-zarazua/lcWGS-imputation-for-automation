@@ -1,0 +1,151 @@
+---
+title: "imputation_genotyping_qcs"
+output: html_document
+date: "2026-05-13"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r kinship, echo=FALSE, fig.width=12, fig.height=5, out.width="100%"}
+library(reshape2)
+library(ggplot2)
+library(patchwork)
+
+kin_data <- read.table(snakemake@input[["kinship"]],
+                           header = TRUE,
+                           comment.char = "")
+colnames(kin_data)[1] <- "IID1"
+
+kin_mirrored <- data.frame(IID1 = c(kin_data$IID1, kin_data$IID2),
+                           IID2 = c(kin_data$IID2, kin_data$IID1),
+                           KINSHIP = c(kin_data$KINSHIP, kin_data$KINSHIP)
+                           )
+
+u_ids <- unique(c(kin_data$IID1, kin_data$IID2))
+self_df <- data.frame(IID1 = u_ids, IID2 = u_ids, KINSHIP = 0)
+
+kin_full <- rbind(kin_mirrored, self_df)
+
+kin_full$KINSHIP <- round(kin_full$KINSHIP,2)
+
+ggplot(kin_full, aes(x = IID1, y = IID2, fill = KINSHIP)) +
+  geom_tile() +
+  geom_text(aes(label = KINSHIP), size = 4) + # 
+  scale_fill_gradient(low = "white", high = "firebrick") +
+  scale_y_discrete(limits = rev) +
+  theme_minimal(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 45, vjust = 1, hjust = 1)) +
+  labs(title = "Pairwise Kinship Matrix (61322116 SNPs)", fill = "Kinship")
+
+```
+
+
+```{r pca, echo=FALSE, fig.width=12, fig.height=5, out.width="100%"}
+library(patchwork)
+library(ggrepel)
+library(tidyr)
+library(dplyr)
+
+eigenval <- read.table(snakemake@input[["eigenval"]],
+		       header = FALSE)
+eigenvec <- read.table(snakemake@input[["eigenvec"]],
+		       header = TRUE,
+		       comment.char="")
+
+colnames(eigenvec)[1] <- "IID"
+
+
+pc1_var <- round(eigenval$V1[1] / sum(eigenval$V1) * 100, 1)
+pc2_var <- round(eigenval$V1[2] / sum(eigenval$V1) * 100, 1)
+
+eigenvec$Category <- "Standard Sample"
+eigenvec$Category[eigenvec$IID == "unclassified"] <- "Unclassified"
+eigenvec$Category[eigenvec$IID == "01-09"] <- "Dropout"
+
+p3 <- ggplot(eigenvec, aes(x = PC1, y = PC2, color = Category)) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_text_repel(aes(label = IID), size = 3.5, show.legend = FALSE) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey70") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey70") +
+  scale_color_manual(values = c(
+    "Standard Sample" = "#2c3e50",
+    "Unclassified" = "#e74c3c",
+    "Dropout" = "#f39c12"
+  )) +
+  theme_minimal(base_size = 16) +
+  # Lock the window range from -1 to 1 for both axes
+  scale_x_continuous(limits = c(-1, 1)) +
+  scale_y_continuous(limits = c(-1, 1)) +
+  labs(
+    title = "PCA: Genetic Convergence",
+    x = paste0("PC1 (", pc1_var, "%)"),
+    y = paste0("PC2 (", pc2_var, "%)"),
+  ) +
+  theme(legend.position = "bottom")
+
+p4 <- ggplot(eigenvec, aes(x = PC9, y = PC10, color = Category)) +
+  geom_point(size = 3, alpha = 0.8) +
+  geom_text_repel(aes(label = IID), size = 3.5, show.legend = FALSE) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "grey70") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "grey70") +
+  scale_color_manual(values = c(
+    "Standard Sample" = "#2c3e50",
+    "Unclassified" = "#e74c3c",
+    "Dropout" = "#f39c12"
+  )) +
+  theme_minimal(base_size = 16) +
+  # Lock the window range from -1 to 1 for both axes
+  scale_x_continuous(limits = c(-1, 1)) +
+  scale_y_continuous(limits = c(-1, 1)) +
+  labs(
+    title = "PCA: Outlier Test",
+    x = "PC9",
+    y = "PC10",
+  ) +
+  theme(legend.position = "bottom")
+
+p3 + p4
+
+
+# Option A: A realistic Sigma threshold for small datasets (e.g., 2.5 or 3)
+threshold <- 2.5
+
+outliers_sigma <- eigenvec %>%
+  dplyr::filter(
+    abs(PC1 - mean(PC1)) / sd(PC1) > threshold |
+    abs(PC2 - mean(PC2)) / sd(PC2) > threshold
+  )
+
+# Option B: The Boxplot Rule (1.5 * IQR) - Highly recommended for small n
+get_iqr_outliers <- function(x) {
+  q <- quantile(x, probs=c(.25, .75), na.rm = TRUE)
+  iqr <- IQR(x, na.rm = TRUE)
+  return(x < (q[1] - 1.5*iqr) | x > (q[2] + 1.5*iqr))
+}
+
+outliers_iqr <- eigenvec %>%
+  dplyr::filter(get_iqr_outliers(PC1) | get_iqr_outliers(PC2))
+
+print("Outliers detected via IQR:")
+print(outliers_iqr$IID)
+```
+
+```{r ratio, echo=FALSE, fig.width=12, fig.height=5, out.width="100%"}
+library(dplyr)
+library(ggplot2)
+
+df_nhet_nhomalt <- read.table(snakemake@input[["ratios"]], sep = "\t", header = TRUE)
+
+df_nhet_nhomalt$nHetsnHomsAltRatio <- round( df_nhet_nhomalt$Heterozygous.0.1. / df_nhet_nhomalt$nHomAlt.1.1.,2)
+
+colnames(df_nhet_nhomalt) <- c("Sample","nRefHom","nHomAlt","nHets","Ratio")
+
+ggplot(df_nhet_nhomalt, aes(x = Sample, y = Ratio, fill = Sample == "unclassified")) +
+  geom_bar(stat = "identity") +
+  scale_fill_manual(values = c("TRUE" = "#e74c3c", "FALSE" = "#7f8c8d")) +
+  theme_minimal(base_size = 16) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1), legend.position = "none") +
+  labs(title = "Het/Hom-Alt Ratio", y = "Ratio", x = "")
+```

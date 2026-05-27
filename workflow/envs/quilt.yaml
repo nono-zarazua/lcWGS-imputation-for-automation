@@ -7,4 +7,12 @@ dependencies:
  - r-base=4.3.*
  - r-stitch=1.7.0
  - r-quilt=2.0.0
+ - r-rmarkdown
+ - r-ggplot2
+ - r-patchwork
+ - r-ggrepel
+ - r-tidyr
+ - r-dplyr
+ - r-reshape2
  - bcftools
+ - plink2

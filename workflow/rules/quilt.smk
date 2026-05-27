@@ -511,16 +511,23 @@ rule quilt_merge_historic:
         historic=config["vcf_qc"]["historic_vcf"]
     output:
         # We append "_updated" so it creates a safe, brand new file
-        merged_vcf=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_{size}_{depth}_updated.vcf.gz")
+        merged_vcf=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_{size}_{depth}_updated.vcf.gz"),
+        indexed_merge=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_{size}_{depth}_updated.vcf.gz.tbi")
+    log:
+        config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_{size}_{depth}_updated.log")
+    conda:
+        "../envs/quilt.yaml"
     shell:
         """
+        (
         echo "Merging with historic samples for QCs."
         
         # 1. Merge them into the safe new file
-        bcftools merge {input.new} {input.historic} -O z -o {output.merged_vcf}
+        bcftools merge --force-samples {input.new} {input.historic} -O z -o {output.merged_vcf}
         
         # 2. Index the newly created merged file
         bcftools index -t {output.merged_vcf}
+        ) &>> {log}
         """
 
 rule quilt_stats_for_het_homalt:
@@ -546,13 +553,13 @@ rule quilt_stats_for_het_homalt:
         bcftools stats -s - {input.vcf} > {output.stats}
 
         # 1. Create the file and write the correct headers
-        echo -e "Sample_ID\tnRefHom\tnHomAlt(1/1)\tHeterozygous(0/1)\tRatio(Het/Hom-Alt)" > {output.ratios}
+        echo -e "Sample_ID\\tnRefHom\tnHomAlt(1/1)\\tHeterozygous(0/1)\\tRatio(Het/Hom-Alt)" > {output.ratios}
         
         echo "Calculating ratios."
         # 2. Extract the data, calculate the ratio, and append it to the file
-        grep "^PSC" {output.stats} | awk -F'\t' '{{
+        grep "^PSC" {output.stats} | awk -F'\\t' '{{
             if ($5 == 0) {{ ratio = 0 }} else {{ ratio = $6/$5 }}
-            printf "%s\t%s\t%s\t%s\t%.2f\n", $3, $4, $5, $6, ratio
+            printf "%s\\t%s\\t%s\\t%s\\t%.2f\\n", $3, $4, $5, $6, ratio
         }}' >> {output.ratios}
 
         echo "Job finished successfully!"
@@ -590,7 +597,7 @@ rule quilt_pruning_and_pca:
         plink2 --vcf {input.vcf} \
             --set-all-var-ids '@:#:$r:$a' \
             --make-pgen \
-            --out {params.prefix}_temporary_named_batch \
+            --out {params.prefix}_out_temp \
             --autosome
         
         # Extract variants 
@@ -603,10 +610,10 @@ rule quilt_pruning_and_pca:
         plink2 --pfile {params.prefix}_clean_batch_for_pca --rm-dup exclude-all --make-pgen --out {params.prefix}_clean_batch_dedup
 
         # PCA
-        plink2 --pfile {params.prefix}_clean_batch_dedup --read-freq {input.afreq} --pca 10 --out {params.prefix}_out_pca
+        plink2 --pfile {params.prefix}_clean_batch_dedup --read-freq {input.afreq} --pca 10 --out {params.prefix}_clean_pca
 
         # Kinship
-        plink2 --pfile {params.prefix}_clean_batch_dedup --make-king-table --out {params.prefix}_out_kinship
+        plink2 --pfile {params.prefix}_clean_batch_dedup --make-king-table --out {params.prefix}_clean_kinship
         ) &>> {log}
         """
 
@@ -654,3 +661,22 @@ rule quilt_split_by_sample:
         echo "Done!"
         ) &>> {log}
         """
+
+rule quilt_render_qc_report:
+    input:
+        kinship=rules.quilt_pruning_and_pca.output.kinship,
+        eigenval=rules.quilt_pruning_and_pca.output.eigenval,
+        eigenvec=rules.quilt_pruning_and_pca.output.eigenvec,
+        ratios=rules.quilt_stats_for_het_homalt.output.ratios
+    output:
+        report=os.path.join(OUTDIR_QUILT2,
+            "refsize{size}",
+            f"{config['run_name']}_down{{depth}}x_QC_Report.html")
+    log:
+        os.path.join(OUTDIR_QUILT2,
+            "refsize{size}",
+            f"{config['run_name']}_down{{depth}}x_QC_Report.log")
+    conda:
+        "../envs/quilt.yaml"
+    script:
+        "../scripts/imputation_genotyping_qcs.Rmd"
