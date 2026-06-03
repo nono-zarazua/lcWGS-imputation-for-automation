@@ -7,4 +7,4 @@ source ~/miniconda3/etc/profile.d/conda.sh
 conda activate snakemake
 
 # Run snakemake 
-snakemake --cores all --sdm conda --keep-going --rerun-incomplete
+snakemake --cores all --sdm conda --rerun-incomplete

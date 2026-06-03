@@ -312,6 +312,7 @@ rule quilt_run_mspbwt:
     threads: 1
     shell:
         """
+        (
         # 1. GENERATE CLEAN SAMPLE LIST
         # Extract 1st column, skip header (NR>1), save to temp file
         awk 'NR>1 {{print $1}}' {params.raw_samples} > {output}.sample_names
@@ -339,13 +340,14 @@ rule quilt_run_mspbwt:
                 --rare_af_threshold={params.rare_af_threshold} \
                 --small_ref_panel_block_gibbs_iterations='{params.block_gibbs}'\
                 --small_ref_panel_gibbs_iterations={params.gibbs_iters} \
-                --output_filename={output} &> {log}
+                --output_filename={output}
         else
-            echo "Skipping QUILT.R because input RData is empty (likely centromere/gap)." &> {log}
+            echo "Skipping QUILT.R because input RData is empty (likely centromere/gap)."
             # Create a valid empty VCF (header only) so ligation doesn't fail
             # We use the input reference chunk to grab a valid header
-            bcftools view -h {input.vcf} | bgzip -c > {output} 2>> {log}
+            (bcftools view -h {input.vcf}; echo "##GHOST_CHUNK=TRUE") | bgzip -c > {output}
         fi
+        ) &>> {log}
         """        
 
 
@@ -407,12 +409,12 @@ rule quilt_ligate_mspbwt:
         
         for f in {input}; do
             # NEGATIVE FILTER (Robust Version):
-            # We search the raw file for 'HG00096' (found in Ref Panel headers).
+            # We search the 'GHOST_CHUNK' metadata assigned in previous  step.
             # -m 1: Stop reading after the first match (fast).
             # If zgrep finds it (exit code 0), it's a Ghost Chunk -> SKIP.
             
-            if zgrep -m 1 -q "HG00096" "$f"; then
-                echo "WARNING: Skipping $f (Found HG00096 - treating as Ghost Chunk/Gap)."
+            if zgrep -m 1 -q "GHOST_CHUNK" "$f"; then
+                echo "WARNING: Skipping $f (Ghost Chunk/Gap detected via metadata tag)."
             else
                 echo "$f" >> {output.lst}
             fi
@@ -502,6 +504,50 @@ rule quilt_concat_genome:
 
         echo "Indexing..."
         bcftools index -t {output.vcf}
+        ) &>> {log}
+        """
+
+rule quilt_split_by_sample:
+    input:
+        vcf=os.path.join(OUTDIR_QUILT2,
+            "refsize{size}",
+            f"quilt.down{config['downsample'][0]}x.mspbwt.genome.vcf.gz"),
+        tbi=os.path.join(OUTDIR_QUILT2,
+            "refsize{size}",
+            f"quilt.down{config['downsample'][0]}x.mspbwt.genome.vcf.gz.tbi")
+    output:
+        vcf=os.path.join(OUTDIR_QUILT2,
+            "refsize{size}",
+            "split_files",
+            "{sample}.vcf.gz"),
+        tbi=os.path.join(OUTDIR_QUILT2,
+            "refsize{size}",
+            "split_files",
+            "{sample}.vcf.gz.tbi")
+    log:
+        os.path.join(OUTDIR_QUILT2,
+            "refsize{size}",
+            "split_files",
+            "{sample}.split.log")
+    conda:
+        "../envs/quilt.yaml"
+    shell:
+        """
+        (
+        echo "Extracting sample {wildcards.sample} from combined genome..."
+        
+        # Extract only the target sample, keep all INFO tags, and compress
+        bcftools view \
+            -s {wildcards.sample} \
+            --threads 4 \
+            -O z \
+            -o {output.vcf} \
+            {input.vcf}
+
+        echo "Indexing the sample VCF..."
+        bcftools index -t {output.vcf}
+        
+        echo "Done!"
         ) &>> {log}
         """
 
@@ -622,51 +668,6 @@ rule quilt_pruning_and_pca:
 
         # Kinship
         plink2 --pfile {params.prefix}_clean_batch_dedup --make-king-table --out {params.prefix}_clean_kinship
-        ) &>> {log}
-        """
-
-       
-rule quilt_split_by_sample:
-    input:
-        vcf=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            f"quilt.down{config['downsample'][0]}x.mspbwt.genome.vcf.gz"),
-        tbi=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            f"quilt.down{config['downsample'][0]}x.mspbwt.genome.vcf.gz.tbi")
-    output:
-        vcf=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "split_files",
-            "{sample}.vcf.gz"),
-        tbi=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "split_files",
-            "{sample}.vcf.gz.tbi")
-    log:
-        os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "split_files",
-            "{sample}.split.log")
-    conda:
-        "../envs/quilt.yaml"
-    shell:
-        """
-        (
-        echo "Extracting sample {wildcards.sample} from combined genome..."
-        
-        # Extract only the target sample, keep all INFO tags, and compress
-        bcftools view \
-            -s {wildcards.sample} \
-            --threads 4 \
-            -O z \
-            -o {output.vcf} \
-            {input.vcf}
-
-        echo "Indexing the sample VCF..."
-        bcftools index -t {output.vcf}
-        
-        echo "Done!"
         ) &>> {log}
         """
 

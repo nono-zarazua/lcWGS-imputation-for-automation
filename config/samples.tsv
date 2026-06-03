@@ -1,6 +1,11 @@
 sampleid	bam	depth
-B008-02_1	data/bams/corrida_20260513_1/B008-02_1.sorted.aligned.bam	0.35
-B008-03_1	data/bams/corrida_20260513_1/B008-03_1.sorted.aligned.bam	0.11
-B008-04_2	data/bams/corrida_20260513_1/B008-04_2.sorted.aligned.bam	0.08
-B008-07_2	data/bams/corrida_20260513_1/B008-07_2.sorted.aligned.bam	0.13
-B008-08_1	data/bams/corrida_20260513_1/B008-08_1.sorted.aligned.bam	0.36
+B023-01_1	data/bams/corrida_20260527_1/B023-01_1.sorted.aligned.bam	0.9
+B023-02_1	data/bams/corrida_20260527_1/B023-02_1.sorted.aligned.bam	0.9
+B023-03_2	data/bams/corrida_20260527_1/B023-03_2.sorted.aligned.bam	1.11
+B023-04_1	data/bams/corrida_20260527_1/B023-04_1.sorted.aligned.bam	0.34
+B023-05_2	data/bams/corrida_20260527_1/B023-05_2.sorted.aligned.bam	1.04
+B023-06_2	data/bams/corrida_20260527_1/B023-06_2.sorted.aligned.bam	0.71
+B023-07_1	data/bams/corrida_20260527_1/B023-07_1.sorted.aligned.bam	1.08
+B023-08_1	data/bams/corrida_20260527_1/B023-08_1.sorted.aligned.bam	0.58
+B008-09_2	data/bams/corrida_20260527_1/B008-09_2.sorted.aligned.bam	1.31
+B008-10_1	data/bams/corrida_20260527_1/B008-10_1.sorted.aligned.bam	0.41
