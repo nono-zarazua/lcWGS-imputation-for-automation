@@ -636,6 +636,7 @@ rule quilt_pruning_and_pca:
     params:
         prefix=os.path.join(OUTDIR_QUILT2,
             "refsize{size}",
+            "qcs",
             f"{config['run_name']}_down{{depth}}x")
     log:
         os.path.join(OUTDIR_QUILT2,
