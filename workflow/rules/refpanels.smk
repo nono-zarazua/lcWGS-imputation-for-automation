@@ -78,28 +78,13 @@ rule subset_refpanel_by_chunkid:
         "../envs/pandas.yaml"
     shell:
         """
-        # 1. Filter, downsample, normalize, and fill info tags
-        bcftools view -v snps -m2 -M2 -r {params.rg} -S {input} --threads 4 {params.vcf} -Ou 2> {log} | \
-        bcftools norm - -d snps -Ou --threads 4 2>> {log} | \
-        bcftools +fill-tags -Oz -o {output.vcf} --threads 4 2>> {log}
-
-        # 2. Index the output VCF
-        bcftools index -f {output.vcf} --threads 4 2>> {log}
-
-        # 3. Create the sites-only VCF
-        bcftools view -G {output.vcf} -Oz -o {output.sites} --threads 4 2>> {log}
-        tabix -f {output.sites} 2>> {log}
-
-        # 4. Extract position map (Double-escaped \\t and \\n keeps Bash happy)
-        bcftools query -f'%CHROM\\t%POS\\t%REF,%ALT\\n' {output.sites} 2>> {log} | bgzip -c > {output.tsv}
-        tabix -s1 -b2 -e2 {output.tsv} 2>> {log}
+        bcftools view -v snps -m2 -M2 --samples-file {input} --threads 4 {params.vcf} {params.rg} | bcftools norm - -d snps -Ob -o {output.vcf} --threads 4 && bcftools index -f {output.vcf} && \
+        touch -m {output.vcf}.csi && \
+        bcftools view -G {output.vcf} -Oz -o {output.sites} --threads 4 && tabix -f {output.sites} && \
+        bcftools query -f'%CHROM\t%POS\t%REF,%ALT\n' {output.sites} | bgzip -c > {output.tsv} && \
+        tabix -s1 -b2 -e2 {output.tsv} &> {log}
         """
-        
-        #bcftools view -v snps -m2 -M2 --samples-file {input} --threads 4 {params.vcf} {params.rg} | bcftools norm - -d snps -Ob -o {output.vcf} --threads 4 && bcftools index -f {output.vcf} && \
-        #touch -m {output.vcf}.csi && \
-        #bcftools view -G {output.vcf} -Oz -o {output.sites} --threads 4 && tabix -f {output.sites} && \
-        #bcftools query -f'%CHROM\t%POS\t%REF,%ALT\n' {output.sites} | bgzip -c > {output.tsv} && \
-        #tabix -s1 -b2 -e2 {output.tsv} &> {log}
+
 
 
 rule concat_refpanel_sites_by_chunks:
