@@ -30,7 +30,7 @@ RUN_NAME = config["run_name"]
 OUTDIR_QUILT2 = os.path.join(OUTDIR, "quilt2", RUN_NAME, "")
 OUTDIR_QUILT2_REF = os.path.join(OUTDIR, "quilt2_prepare", "")
 OUTDIR_GLIMPSE = os.path.join(OUTDIR, "glimpse1", "")
-OUTDIR_GLIMPSE2 = os.path.join(OUTDIR, "glimpse2", "")
+OUTDIR_GLIMPSE2 = os.path.join(OUTDIR, "glimpse2", RUN_NAME, "")
 OUTDIR_SUMMARY = os.path.join(OUTDIR, "summary", "")
 OUTDIR_REPORT = os.path.join(OUTDIR, "report", "")
 
@@ -428,7 +428,7 @@ def get_glimpse_chunks_in_and_out(chrom):
             fn = REFPANEL[chrom].get("glimpse_chunk")
         elif not os.path.isfile(fn):
             os.system(
-                f"GLIMPSE_chunk --input {REFPANEL[chrom]['vcf']} --region {chrom} --window-size {config['chunksize']} --buffer-size {config['glimpse1']['buffer']} --output {fn} "
+                 f"conda run -n glimpse1 GLIMPSE_chunk --input {REFPANEL[chrom]['vcf']} --region {chrom} --window-size {config['chunksize']} --buffer-size {config['glimpse1']['buffer']} --output {fn} "
             )
         with open(fn) as f:
             for row in f:

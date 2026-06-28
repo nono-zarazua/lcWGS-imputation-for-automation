@@ -61,6 +61,7 @@ rule glimpse2_phase:
             "down{depth}x.chunk_{chunkid}.bcf.llog",
         ),
     params:
+        ploidy=config["ploidy"],
         N="glimpse2_phase",
         time=config["time"],
         irg=get_glimpse_chunki_irg,
@@ -78,6 +79,7 @@ rule glimpse2_phase:
             {params.time} -v GLIMPSE2_phase \
             --bam-list {input.bams} \
             --reference {input.refbin} \
+            --samples-file {params.ploidy} \
             --burnin {params.burnin} \
             --main {params.main} \
             --pbwt-depth {params.pbwtL} \

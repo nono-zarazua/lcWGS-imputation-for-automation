@@ -8,4 +8,4 @@ dependencies:
   - bc
   - bcftools
   - htslib
-  - glimpse-bio
+  - glimpse-bio=1.1.1
