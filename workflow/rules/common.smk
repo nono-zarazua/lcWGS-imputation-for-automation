@@ -31,6 +31,7 @@ OUTDIR_QUILT2 = os.path.join(OUTDIR, "quilt2", RUN_NAME, "")
 OUTDIR_QUILT2_REF = os.path.join(OUTDIR, "quilt2_prepare", "")
 OUTDIR_GLIMPSE = os.path.join(OUTDIR, "glimpse1", "")
 OUTDIR_GLIMPSE2 = os.path.join(OUTDIR, "glimpse2", RUN_NAME, "")
+OUTDIR_GENETRIA = os.path.join(OUTDIR, "genetria", RUN_NAME, "")
 OUTDIR_SUMMARY = os.path.join(OUTDIR, "summary", "")
 OUTDIR_REPORT = os.path.join(OUTDIR, "report", "")
 
@@ -59,6 +60,26 @@ def get_all_results():
         return get_glimpse_results()
     elif RUN == "glimpse2":
         return get_glimpse2_results()
+    elif RUN == "genetria":
+        targets = []
+
+        # Split your config list into autosomes and X chromosome
+        autosomes = [c for c in config["chroms"] if "chrX" not in str(c)]
+        x_chroms = [c for c in config["chroms"] if "chrX" in str(c)]
+
+        # Only request QUILT2 outputs if autosomes are present in the run
+        if autosomes:
+            targets += get_quilt_mspbwt_results()
+        
+        # Only request GLIMPSE2 outputs if X chromosome is present in the run
+        if x_chroms:
+            targets += expand(
+                rules.glimpse2_ligate.output,
+                chrom=x_chroms,
+                size=config["refsize"],
+                depth=config["downsample"]
+            )
+        return targets
     elif RUN == "V2":
         return (
             get_quilt_mspbwt_accuracy(),
@@ -399,7 +420,10 @@ def get_quilt_mspbwt_outputs(wildcards):
     return expand(rules.quilt_run_mspbwt.output, chunkid=ids, allow_missing=True)
 
 def get_quilt_genome_inputs(wildcards):
-    return expand(rules.quilt_ligate_mspbwt.output.vcf, chrom=config["chroms"], size=wildcards.size, depth=wildcards.depth )
+    chroms = config["chroms"]
+    if config.get("scenario") == "genetria":
+        chroms = [c for c in chroms if "chrX" not in str(c)]
+    return expand(rules.quilt_ligate_mspbwt.output.vcf, chrom=chroms, size=wildcards.size, depth=wildcards.depth )
 
 def collect_quilt_regular_logs(wildcards):
     d = get_refpanel_chunks(wildcards.chrom)
