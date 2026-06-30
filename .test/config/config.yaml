@@ -1,26 +1,38 @@
 
 samples: config/samples.tsv
+ploidy: config/samples-sex.tsv
 
 genome:
-  fasta: data/hg38.fa
+  fasta: data/referencefa/hg38.analysisSet.fa
   species: human
   build: GRCh38
   refpanel: config/refpanel.tsv
 
+vcf_qc:
+  historic_vcf: "data/historic/historic_cleaned.vcf.gz"
+  prune_in: "data/pruned/qc_pruning.prune.in"
+  afreq: "data/pruned/ref_panel_freqs.afreq"
 
-chroms: ['chr20']
-downsample: [0.25, 0.5]
+downsample: [0]
+
+# refsize: [0, 100, 200, 300, 400]
 refsize: [0]
 
-#'all', 'speed', 'accuracy', 'quilt','glimpse','quilt1', 'quilt2', 'glimpse1',  'glimpse2'
-scenario: 'quilt2'
+#chroms: ['chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrX']
+
+chroms: ['chrX']
+
+run_name: "glimpse_trial"
+
+#'all', 'speed', 'accuracy', 'quilt1', 'quilt2', 'glimpse1',  'glimpse2'
+scenario: 'glimpse2'
 
 # global programs
 time: "/usr/bin/time"
 
 ## we wanna output some extra variants in buffer for ligation
 extra_buffer_in_quilt: 100000
-chunksize: 2000000
+chunksize: 5000000
 
 quilt2:
   nGen: 100

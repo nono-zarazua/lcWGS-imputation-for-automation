@@ -1,2 +1,2 @@
-chr	vcf	start	end	quilt_map
-chr20	data/refpanel.bcf	82590	64283878	data/CEU-chr20-final.b38.txt.gz
+chr	vcf	start	end	glimpse_map
+chrX	data/refpanel/1kGP_high_coverage_Illumina.chrX.filtered.SNV_INDEL_SV_phased_panel.vcf.gz	2785350	155699751	data/gmaps/chrX.b38.gmap.gz

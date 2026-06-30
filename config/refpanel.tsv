@@ -1,4 +1,4 @@
-chr	vcf	start	end	quilt_map
+chr	vcf	start	end	quilt_map	glimpse_map
 chr1	data/refpanel/1kGP_high_coverage_Illumina.chr1.filtered.SNV_INDEL_SV_phased_panel.vcf.gz	55550	248924793	data/maps/beagle-map-converted/chr1.map
 chr2	data/refpanel/1kGP_high_coverage_Illumina.chr2.filtered.SNV_INDEL_SV_phased_panel.vcf.gz	12994	242148846	data/maps/beagle-map-converted/chr2.map
 chr3	data/refpanel/1kGP_high_coverage_Illumina.chr3.filtered.SNV_INDEL_SV_phased_panel.vcf.gz	19435	198147657	data/maps/beagle-map-converted/chr3.map
@@ -21,4 +21,4 @@ chr19	data/refpanel/1kGP_high_coverage_Illumina.chr19.filtered.SNV_INDEL_SV_phas
 chr20	data/refpanel/1kGP_high_coverage_Illumina.chr20.filtered.SNV_INDEL_SV_phased_panel.vcf.gz	81154	64318092	data/maps/beagle-map-converted/chr20.map
 chr21	data/refpanel/1kGP_high_coverage_Illumina.chr21.filtered.SNV_INDEL_SV_phased_panel.vcf.gz	10326676	46680243	data/maps/beagle-map-converted/chr21.map
 chr22	data/refpanel/1kGP_high_coverage_Illumina.chr22.filtered.SNV_INDEL_SV_phased_panel.vcf.gz	15287922	50791377	data/maps/beagle-map-converted/chr22.map
-chrX	data/refpanel/1kGP_high_coverage_Illumina.chrX.filtered.SNV_INDEL_SV_phased_panel.vcf.gz	233451	156005413	data/maps/beagle-map-converted/chrX.map
+chrX	data/refpanel/1kGP_high_coverage_Illumina.chrX.filtered.SNV_INDEL_SV_phased_panel.vcf.gz	2785350	155699751	data/maps/beagle-map-converted/chrX.map	data/gmaps/chrX.b38.gmap.gz

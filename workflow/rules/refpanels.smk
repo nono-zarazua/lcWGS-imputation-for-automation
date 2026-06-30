@@ -84,7 +84,7 @@ rule subset_refpanel_by_chunkid:
         bcftools query -f'%CHROM\t%POS\t%REF,%ALT\n' {output.sites} | bgzip -c > {output.tsv} && \
         tabix -s1 -b2 -e2 {output.tsv} &> {log}
         """
-
+ 
 
 
 rule concat_refpanel_sites_by_chunks:

@@ -1,5 +1,6 @@
 
 samples: config/samples.tsv
+ploidy: config/samples-sex.tsv
 
 genome:
   fasta: data/human/GRCh38_full_analysis_set_plus_decoy_hla.fa
@@ -8,7 +9,7 @@ genome:
   refpanel: config/refpanel.tsv
 
 vcf_qc:
-  historic_vcf: "data/historic/historic_samples.vcf.gz"
+  historic_vcf: "data/historic/historic_cleaned.vcf.gz"
   prune_in: "data/pruned/qc_pruning.prune.in"
   afreq: "data/pruned/ref_panel_freqs.afreq"
 
@@ -19,10 +20,10 @@ refsize: [0]
 
 chroms: ['chr1', 'chr2', 'chr3', 'chr4', 'chr5', 'chr6', 'chr7', 'chr8', 'chr9', 'chr10', 'chr11', 'chr12', 'chr13', 'chr14', 'chr15', 'chr16', 'chr17', 'chr18', 'chr19', 'chr20', 'chr21', 'chr22', 'chrX']
 
-run_name: "corrida_20260527_1"
+run_name: "corrida_20260611_1"
 
 #'all', 'speed', 'accuracy', 'quilt1', 'quilt2', 'glimpse1',  'glimpse2'
-scenario: 'quilt2'
+scenario: 'glimpse2'
 
 # global programs
 time: "/usr/bin/time"
