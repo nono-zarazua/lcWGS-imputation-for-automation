@@ -67,7 +67,7 @@ rule subset_refpanel_by_chunkid:
         prefix=lambda wildcards, output: os.path.splitext(output[0])[0],
         vcf=lambda wildcards: REFPANEL[wildcards.chrom]["vcf"],
         rg=get_glimpse_chunki_irg,
-        #rg=lambda wildcards: get_refpanel_chunk_region(
+	#rg=lambda wildcards: get_refpanel_chunk_region(
         #    wildcards.chrom, wildcards.chunkid
         #),
     log:
