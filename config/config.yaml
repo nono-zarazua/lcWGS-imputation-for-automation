@@ -25,7 +25,7 @@ chroms: ['chrX']
 #'all', 'speed', 'accuracy', 'quilt1', 'quilt2', 'glimpse1',  'glimpse2'
 scenario: 'glimpse2'
 
-run_name: 'corrida_20260626_1'
+run_name: 'dual_trial'
 
 # global programs
 time: "/usr/bin/time"
