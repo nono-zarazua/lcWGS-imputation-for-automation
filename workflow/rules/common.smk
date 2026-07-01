@@ -16,6 +16,7 @@ HISTORIC = (
 # dict : {"chr1": {"vcf": chr1.vcf.gz,"start":1, "end": 99999}, ...}
 REFPANEL = (
     pd.read_csv(os.path.abspath(config["genome"]["refpanel"]), sep="\t", dtype=str)
+    .fillna("")
     .set_index("chr")
     .to_dict(orient="index")
 )
