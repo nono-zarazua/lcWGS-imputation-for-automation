@@ -248,17 +248,17 @@ rule glimpse_ligate:
         get_glimpse_phase_outputs,
     output:
         vcf=os.path.join(
-            OUTDIR_GLIMPSE, "refsize{size}", "{chrom}", "{chrom}.bcf"
+            OUTDIR_GLIMPSE, "refsize{size}", "{chrom}", "down{depth}x.{chrom}.bcf"
         ),
         lst=os.path.join(
             OUTDIR_GLIMPSE,
             "refsize{size}",
             "{chrom}",
-            "{chrom}.vcf.list",
+            "down{depth}x.{chrom}.vcf.list",
         ),
     log:
         os.path.join(
-            OUTDIR_GLIMPSE, "refsize{size}", "{chrom}", "{chrom}.llog"
+            OUTDIR_GLIMPSE, "refsize{size}", "{chrom}", "down{depth}x.{chrom}.llog"
         ),
     params:
         N="glimpse_ligate",

@@ -4,33 +4,32 @@ rule genetria_concat_genome:
     the ligated Chromosome X BCF from GLIMPSE2 into a unified file.
     """
     input:
-        quilt=os.path.join(
-            OUTDIR_QUILT2,
+        quilt=os.path.join(OUTDIR_QUILT2,
             "refsize{size}",
-            "quilt.mspbwt.genome.vcf.gz"
+            f"quilt.down{config['downsample'][0]}x.mspbwt.genome.vcf.gz"
         ),
         glimpse=os.path.join(
             OUTDIR_GLIMPSE2,
             "refsize{size}",
             "chrX",
-            "chrX.bcf"
+            f"down{config['downsample'][0]}x.chrX.bcf"
         )
     output:
         vcf=os.path.join(
             OUTDIR_GENETRIA,
             "refsize{size}",
-            "genetria.genome.vcf.gz"
+            f"genetria.down{config['downsample'][0]}x.genome.vcf.gz"
         ),
         tbi=os.path.join(
             OUTDIR_GENETRIA,
             "refsize{size}",
-            "genetria.genome.vcf.gz.tbi"
+            f"genetria.down{config['downsample'][0]}x.genome.vcf.gz.tbi"
         )
     log:
         os.path.join(
             OUTDIR_GENETRIA,
             "refsize{size}",
-            "genetria.genome.vcf.gz.log"
+            f"genetria.down{config['downsample'][0]}x.genome.vcf.gz.log"
         )
     conda:
         "../envs/quilt.yaml"
@@ -103,10 +102,10 @@ rule genetria_merge_historic:
         new=rules.genetria_concat_genome.output.vcf,
         historic=config["vcf_qc"]["historic_vcf"]
     output:
-        merged_vcf=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_genetria_updated.vcf.gz"),
-        indexed_merge=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_genetria_updated.vcf.gz.tbi")
+        merged_vcf=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_genetria_{size}_{depth}_updated.vcf.gz"),
+        indexed_merge=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_genetria_{size}_{depth}_updated.vcf.gz.tbi")
     log:
-        config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_genetria_updated.log")
+        config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_genetria_{size}_{depth}_updated.log")
     conda:
         "../envs/quilt.yaml"
     shell:

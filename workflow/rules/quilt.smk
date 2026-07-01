@@ -477,14 +477,14 @@ rule quilt_concat_genome:
     output:
         vcf=os.path.join(OUTDIR_QUILT2,
             "refsize{size}",
-            "quilt.mspbwt.genome.vcf.gz"),
+            "quilt.down{depth}x.mspbwt.genome.vcf.gz"),
         tbi=os.path.join(OUTDIR_QUILT2,
             "refsize{size}",
-            "quilt.mspbwt.genome.vcf.gz.tbi")
+            "quilt.down{depth}x.mspbwt.genome.vcf.gz.tbi")
     log:
         os.path.join(OUTDIR_QUILT2,
             "refsize{size}",
-            "quilt.mspbwt.genome.vcf.gz.log")
+            "quilt.down{depth}x.mspbwt.genome.vcf.gz.log")
     conda:
         "../envs/quilt.yaml"
     shell:
