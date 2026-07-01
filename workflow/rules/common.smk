@@ -61,23 +61,7 @@ def get_all_results():
     elif RUN == "glimpse2":
         return get_glimpse2_results()
     elif RUN == "genetria":
-        targets = []
-        autosomes = [chrom for chrom in config["chroms"] if "chrX" not in str(chrom)]
-        x_chroms = [chrom for chrom in config["chroms"] if "X" in str(chrom)]
-        
-        # 1. Gather QUILT2 outputs if autosomes are in the run
-        if autosomes:
-            targets += get_quilt_mspbwt_results()
-            
-        # 2. Gather GLIMPSE2 outputs specifically for Chromosome X
-        if x_chroms:
-            targets += expand(
-                rules.glimpse2_ligate.output,
-                chrom=x_chroms,
-                size=config["refsize"],
-                depth=config["downsample"],
-            )
-        return targets
+        return get_genetria_results()
     elif RUN == "glimpse":
         return get_glimpse_accuracy(), get_speed_glimpse_plots()
     elif RUN == "V2":
@@ -234,37 +218,12 @@ def get_quilt_regular_results():
 
 
 def get_quilt_mspbwt_results():
-    genome_targets = expand(
+    return expand(
         rules.quilt_concat_genome.output,
         size=config["refsize"],
         depth=config["downsample"],
     )
 
-    split_targets = expand(
-        rules.quilt_split_by_sample.output,
-        size=config["refsize"],
-        sample=SAMPLES
-    )
-   
-    qc_targets = expand(
-        rules.quilt_stats_for_het_homalt.output,
-        size=config["refsize"],
-        depth=config["downsample"],
-    )
-
-    pca_targets = expand(
-        rules.quilt_pruning_and_pca.output,
-        size=config["refsize"],
-        depth=config["downsample"],
-    )
-
-    report_targets = expand(
-        rules.quilt_render_qc_report.output.report,
-        size=config["refsize"],
-        depth=config["downsample"],
-    )
-
-    return genome_targets + split_targets + qc_targets + pca_targets + report_targets
 
 def get_glimpse_results():
     return expand(
@@ -283,6 +242,27 @@ def get_glimpse2_results():
         depth=config["downsample"],
     )
 
+def get_genetria_results():
+    """Gathers all final whole-genome hybrid targets for the genetria scenario."""
+    genome_targets = expand(
+        rules.genetria_concat_genome.output.vcf,
+        size=config["refsize"],
+        depth=config["downsample"],
+    )
+
+    split_targets = expand(
+        rules.genetria_split_by_sample.output.vcf,
+        size=config["refsize"],
+        sample=SAMPLES
+    )
+   
+    report_targets = expand(
+        rules.genetria_render_qc_report.output.report,
+        size=config["refsize"],
+        depth=config["downsample"],
+    )
+
+    return genome_targets + split_targets + report_targets
 
 def if_exclude_samples_in_refpanel(wildcards):
     if REFPANEL[wildcards.chrom].get("exclude_samples"):

@@ -26,6 +26,7 @@ include: "rules/refpanels.smk"
 include: "rules/downsample.smk"
 include: "rules/quilt.smk"
 include: "rules/glimpse.smk"
+include: "rules/genetria.smk"
 include: "rules/accuracy.smk"
 include: "rules/speed.smk"
 
