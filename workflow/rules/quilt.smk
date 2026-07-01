@@ -507,188 +507,188 @@ rule quilt_concat_genome:
         ) &>> {log}
         """
 
-rule quilt_split_by_sample:
-    input:
-        vcf=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            f"quilt.down{config['downsample'][0]}x.mspbwt.genome.vcf.gz"),
-        tbi=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            f"quilt.down{config['downsample'][0]}x.mspbwt.genome.vcf.gz.tbi")
-    output:
-        vcf=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "split_files",
-            "{sample}.vcf.gz"),
-        tbi=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "split_files",
-            "{sample}.vcf.gz.tbi")
-    log:
-        os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "split_files",
-            "{sample}.split.log")
-    conda:
-        "../envs/quilt.yaml"
-    shell:
-        """
-        (
-        echo "Extracting sample {wildcards.sample} from combined genome..."
+# rule quilt_split_by_sample:
+#     input:
+#         vcf=os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             f"quilt.down{config['downsample'][0]}x.mspbwt.genome.vcf.gz"),
+#         tbi=os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             f"quilt.down{config['downsample'][0]}x.mspbwt.genome.vcf.gz.tbi")
+#     output:
+#         vcf=os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             "split_files",
+#             "{sample}.vcf.gz"),
+#         tbi=os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             "split_files",
+#             "{sample}.vcf.gz.tbi")
+#     log:
+#         os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             "split_files",
+#             "{sample}.split.log")
+#     conda:
+#         "../envs/quilt.yaml"
+#     shell:
+#         """
+#         (
+#         echo "Extracting sample {wildcards.sample} from combined genome..."
         
-        # Extract only the target sample, keep all INFO tags, and compress
-        bcftools view \
-            -s {wildcards.sample} \
-            --threads 4 \
-            -O z \
-            -o {output.vcf} \
-            {input.vcf}
+#         # Extract only the target sample, keep all INFO tags, and compress
+#         bcftools view \
+#             -s {wildcards.sample} \
+#             --threads 4 \
+#             -O z \
+#             -o {output.vcf} \
+#             {input.vcf}
 
-        echo "Indexing the sample VCF..."
-        bcftools index -t {output.vcf}
+#         echo "Indexing the sample VCF..."
+#         bcftools index -t {output.vcf}
         
-        echo "Done!"
-        ) &>> {log}
-        """
+#         echo "Done!"
+#         ) &>> {log}
+#         """
 
-rule quilt_merge_historic:
-    input:
-        new=rules.quilt_concat_genome.output.vcf,
-        historic=config["vcf_qc"]["historic_vcf"]
-    output:
-        # We append "_updated" so it creates a safe, brand new file
-        merged_vcf=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_{size}_{depth}_updated.vcf.gz"),
-        indexed_merge=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_{size}_{depth}_updated.vcf.gz.tbi")
-    log:
-        config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_{size}_{depth}_updated.log")
-    conda:
-        "../envs/quilt.yaml"
-    shell:
-        """
-        (
-        echo "Merging with historic samples for QCs."
+# rule quilt_merge_historic:
+#     input:
+#         new=rules.quilt_concat_genome.output.vcf,
+#         historic=config["vcf_qc"]["historic_vcf"]
+#     output:
+#         # We append "_updated" so it creates a safe, brand new file
+#         merged_vcf=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_{size}_{depth}_updated.vcf.gz"),
+#         indexed_merge=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_{size}_{depth}_updated.vcf.gz.tbi")
+#     log:
+#         config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_{size}_{depth}_updated.log")
+#     conda:
+#         "../envs/quilt.yaml"
+#     shell:
+#         """
+#         (
+#         echo "Merging with historic samples for QCs."
         
-        # 1. Merge them into the safe new file
-        bcftools merge --force-samples {input.new} {input.historic} -O z -o {output.merged_vcf}
+#         # 1. Merge them into the safe new file
+#         bcftools merge --force-samples {input.new} {input.historic} -O z -o {output.merged_vcf}
         
-        # 2. Index the newly created merged file
-        bcftools index -t {output.merged_vcf}
-        ) &>> {log}
-        """
+#         # 2. Index the newly created merged file
+#         bcftools index -t {output.merged_vcf}
+#         ) &>> {log}
+#         """
 
-rule quilt_stats_for_het_homalt:
-    input:
-        vcf=rules.quilt_merge_historic.output.merged_vcf
-    output:
-        stats=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "qcs",
-            f"{config['run_name']}_down{{depth}}x_sample_stats.txt"),
-        ratios=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "qcs",
-            f"{config['run_name']}_down{{depth}}x_clean_ratios.tsv")
-    log:
-        os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "qcs",
-            f"{config['run_name']}_down{{depth}}x_clean_ratios.tsv.log")
-    conda:
-        "../envs/quilt.yaml"
-    shell:
-        """
-        (
-        echo "Running bcftools stats"
-        bcftools stats -s - {input.vcf} > {output.stats}
+# rule quilt_stats_for_het_homalt:
+#     input:
+#         vcf=rules.quilt_merge_historic.output.merged_vcf
+#     output:
+#         stats=os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             "qcs",
+#             f"{config['run_name']}_down{{depth}}x_sample_stats.txt"),
+#         ratios=os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             "qcs",
+#             f"{config['run_name']}_down{{depth}}x_clean_ratios.tsv")
+#     log:
+#         os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             "qcs",
+#             f"{config['run_name']}_down{{depth}}x_clean_ratios.tsv.log")
+#     conda:
+#         "../envs/quilt.yaml"
+#     shell:
+#         """
+#         (
+#         echo "Running bcftools stats"
+#         bcftools stats -s - {input.vcf} > {output.stats}
 
-        # 1. Create the file and write the correct headers
-        echo -e "Sample_ID\\tnRefHom\tnHomAlt(1/1)\\tHeterozygous(0/1)\\tRatio(Het/Hom-Alt)" > {output.ratios}
+#         # 1. Create the file and write the correct headers
+#         echo -e "Sample_ID\\tnRefHom\tnHomAlt(1/1)\\tHeterozygous(0/1)\\tRatio(Het/Hom-Alt)" > {output.ratios}
         
-        echo "Calculating ratios."
-        # 2. Extract the data, calculate the ratio, and append it to the file
-        grep "^PSC" {output.stats} | awk -F'\\t' '{{
-            if ($5 == 0) {{ ratio = 0 }} else {{ ratio = $6/$5 }}
-            printf "%s\\t%s\\t%s\\t%s\\t%.2f\\n", $3, $4, $5, $6, ratio
-        }}' >> {output.ratios}
+#         echo "Calculating ratios."
+#         # 2. Extract the data, calculate the ratio, and append it to the file
+#         grep "^PSC" {output.stats} | awk -F'\\t' '{{
+#             if ($5 == 0) {{ ratio = 0 }} else {{ ratio = $6/$5 }}
+#             printf "%s\\t%s\\t%s\\t%s\\t%.2f\\n", $3, $4, $5, $6, ratio
+#         }}' >> {output.ratios}
 
-        echo "Job finished successfully!"
-        ) &>> {log}
-        """
+#         echo "Job finished successfully!"
+#         ) &>> {log}
+#         """
 
-rule quilt_pruning_and_pca:
-    input:    
-        vcf=rules.quilt_merge_historic.output.merged_vcf,
-        prune_in=config["vcf_qc"]["prune_in"],
-        afreq=config["vcf_qc"]["afreq"]
-    output:
-        eigenvec=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "qcs",
-            f"{config['run_name']}_down{{depth}}x_clean_pca.eigenvec"),
-        eigenval=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "qcs",
-            f"{config['run_name']}_down{{depth}}x_clean_pca.eigenval"),
-        kinship=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "qcs",
-            f"{config['run_name']}_down{{depth}}x_clean_kinship.kin0")
-    params:
-        prefix=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "qcs",
-            f"{config['run_name']}_down{{depth}}x")
-    log:
-        os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            "qcs",
-            f"{config['run_name']}_down{{depth}}x_clean_pca.log")
-    conda:
-        "../envs/quilt.yaml"
+# rule quilt_pruning_and_pca:
+#     input:    
+#         vcf=rules.quilt_merge_historic.output.merged_vcf,
+#         prune_in=config["vcf_qc"]["prune_in"],
+#         afreq=config["vcf_qc"]["afreq"]
+#     output:
+#         eigenvec=os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             "qcs",
+#             f"{config['run_name']}_down{{depth}}x_clean_pca.eigenvec"),
+#         eigenval=os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             "qcs",
+#             f"{config['run_name']}_down{{depth}}x_clean_pca.eigenval"),
+#         kinship=os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             "qcs",
+#             f"{config['run_name']}_down{{depth}}x_clean_kinship.kin0")
+#     params:
+#         prefix=os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             "qcs",
+#             f"{config['run_name']}_down{{depth}}x")
+#     log:
+#         os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             "qcs",
+#             f"{config['run_name']}_down{{depth}}x_clean_pca.log")
+#     conda:
+#         "../envs/quilt.yaml"
 
-    shell:
-        """
-        (
-        plink2 --vcf {input.vcf} \
-            --set-all-var-ids '@:#:$r:$a' \
-            --make-pgen \
-            --out {params.prefix}_out_temp \
-            --autosome
+#     shell:
+#         """
+#         (
+#         plink2 --vcf {input.vcf} \
+#             --set-all-var-ids '@:#:$r:$a' \
+#             --make-pgen \
+#             --out {params.prefix}_out_temp \
+#             --autosome
         
-        # Extract variants 
-        plink2 --pfile {params.prefix}_out_temp \
-            --extract {input.prune_in} \
-            --make-pgen \
-            --out {params.prefix}_clean_batch_for_pca
+#         # Extract variants 
+#         plink2 --pfile {params.prefix}_out_temp \
+#             --extract {input.prune_in} \
+#             --make-pgen \
+#             --out {params.prefix}_clean_batch_for_pca
 
-        # Clean data set
-        plink2 --pfile {params.prefix}_clean_batch_for_pca --rm-dup exclude-all --make-pgen --out {params.prefix}_clean_batch_dedup
+#         # Clean data set
+#         plink2 --pfile {params.prefix}_clean_batch_for_pca --rm-dup exclude-all --make-pgen --out {params.prefix}_clean_batch_dedup
 
-        # PCA
-        plink2 --pfile {params.prefix}_clean_batch_dedup --read-freq {input.afreq} --pca 10 --out {params.prefix}_clean_pca
+#         # PCA
+#         plink2 --pfile {params.prefix}_clean_batch_dedup --read-freq {input.afreq} --pca 10 --out {params.prefix}_clean_pca
 
-        # Kinship
-        plink2 --pfile {params.prefix}_clean_batch_dedup --make-king-table --out {params.prefix}_clean_kinship
-        ) &>> {log}
-        """
+#         # Kinship
+#         plink2 --pfile {params.prefix}_clean_batch_dedup --make-king-table --out {params.prefix}_clean_kinship
+#         ) &>> {log}
+#         """
 
-rule quilt_render_qc_report:
-    input:
-        kinship=rules.quilt_pruning_and_pca.output.kinship,
-        eigenval=rules.quilt_pruning_and_pca.output.eigenval,
-        eigenvec=rules.quilt_pruning_and_pca.output.eigenvec,
-        ratios=rules.quilt_stats_for_het_homalt.output.ratios
-    output:
-        report=os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            f"{config['run_name']}_down{{depth}}x_QC_Report.html")
-    params:
-        batch=config['run_name']
-    log:
-        os.path.join(OUTDIR_QUILT2,
-            "refsize{size}",
-            f"{config['run_name']}_down{{depth}}x_QC_Report.log")
-    conda:
-        "../envs/quilt.yaml"
-    script:
-        "../scripts/imputation_genotyping_qcs.Rmd"
+# rule quilt_render_qc_report:
+#     input:
+#         kinship=rules.quilt_pruning_and_pca.output.kinship,
+#         eigenval=rules.quilt_pruning_and_pca.output.eigenval,
+#         eigenvec=rules.quilt_pruning_and_pca.output.eigenvec,
+#         ratios=rules.quilt_stats_for_het_homalt.output.ratios
+#     output:
+#         report=os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             f"{config['run_name']}_down{{depth}}x_QC_Report.html")
+#     params:
+#         batch=config['run_name']
+#     log:
+#         os.path.join(OUTDIR_QUILT2,
+#             "refsize{size}",
+#             f"{config['run_name']}_down{{depth}}x_QC_Report.log")
+#     conda:
+#         "../envs/quilt.yaml"
+#     script:
+#         "../scripts/imputation_genotyping_qcs.Rmd"
