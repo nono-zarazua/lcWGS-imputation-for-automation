@@ -7,30 +7,30 @@ rule genetria_concat_genome:
         quilt=os.path.join(
             OUTDIR_QUILT2,
             "refsize{size}",
-            "quilt.down{depth}x.mspbwt.genome.vcf.gz"
+            "quilt.mspbwt.genome.vcf.gz"
         ),
         glimpse=os.path.join(
             OUTDIR_GLIMPSE2,
             "refsize{size}",
             "chrX",
-            "down{depth}x.chrX.bcf"
+            "chrX.bcf"
         )
     output:
         vcf=os.path.join(
             OUTDIR_GENETRIA,
             "refsize{size}",
-            "genetria.down{depth}x.genome.vcf.gz"
+            "genetria.genome.vcf.gz"
         ),
         tbi=os.path.join(
             OUTDIR_GENETRIA,
             "refsize{size}",
-            "genetria.down{depth}x.genome.vcf.gz.tbi"
+            "genetria.genome.vcf.gz.tbi"
         )
     log:
         os.path.join(
             OUTDIR_GENETRIA,
             "refsize{size}",
-            "genetria.down{depth}x.genome.vcf.gz.log"
+            "genetria.genome.vcf.gz.log"
         )
     conda:
         "../envs/quilt.yaml"
@@ -103,10 +103,10 @@ rule genetria_merge_historic:
         new=rules.genetria_concat_genome.output.vcf,
         historic=config["vcf_qc"]["historic_vcf"]
     output:
-        merged_vcf=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_genetria_{size}_{depth}_updated.vcf.gz"),
-        indexed_merge=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_genetria_{size}_{depth}_updated.vcf.gz.tbi")
+        merged_vcf=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_genetria_updated.vcf.gz"),
+        indexed_merge=config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_genetria_updated.vcf.gz.tbi")
     log:
-        config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_genetria_{size}_{depth}_updated.log")
+        config["vcf_qc"]["historic_vcf"].replace(".vcf.gz", "_genetria_updated.log")
     conda:
         "../envs/quilt.yaml"
     shell:
