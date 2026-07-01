@@ -31,6 +31,7 @@ OUTDIR_QUILT2 = os.path.join(OUTDIR, "quilt2", RUN_NAME, "")
 OUTDIR_QUILT2_REF = os.path.join(OUTDIR, "quilt2_prepare", "")
 OUTDIR_GLIMPSE = os.path.join(OUTDIR, "glimpse1", "")
 OUTDIR_GLIMPSE2 = os.path.join(OUTDIR, "glimpse2", RUN_NAME, "")
+OUTDIR_GENETRIA = os.path.join(OUTDIR, "genetria", RUN_NAME, "")
 OUTDIR_SUMMARY = os.path.join(OUTDIR, "summary", "")
 OUTDIR_REPORT = os.path.join(OUTDIR, "report", "")
 
@@ -59,6 +60,26 @@ def get_all_results():
         return get_glimpse_results()
     elif RUN == "glimpse2":
         return get_glimpse2_results()
+    elif RUN == "genetria":
+        targets = []
+        autosomes = [chrom for chrom in config["chroms"] if "chrX" not in str(chrom)]
+        x_chroms = [chrom for chrom in config["chroms"] if "X" in str(chrom)]
+        
+        # 1. Gather QUILT2 outputs if autosomes are in the run
+        if autosomes:
+            targets += get_quilt_mspbwt_results()
+            
+        # 2. Gather GLIMPSE2 outputs specifically for Chromosome X
+        if x_chroms:
+            targets += expand(
+                rules.glimpse2_ligate.output,
+                chrom=x_chroms,
+                size=config["refsize"],
+                depth=config["downsample"],
+            )
+        return targets
+    elif RUN == "glimpse":
+        return get_glimpse_accuracy(), get_speed_glimpse_plots()
     elif RUN == "V2":
         return (
             get_quilt_mspbwt_accuracy(),
@@ -399,7 +420,21 @@ def get_quilt_mspbwt_outputs(wildcards):
     return expand(rules.quilt_run_mspbwt.output, chunkid=ids, allow_missing=True)
 
 def get_quilt_genome_inputs(wildcards):
-    return expand(rules.quilt_ligate_mspbwt.output.vcf, chrom=config["chroms"], size=wildcards.size, depth=wildcards.depth )
+    chroms = config["chroms"]
+    
+    # 🚀 Keep QUILT2 completely blind to Chromosome X during mixed runs
+    if config.get("scenario") == "genetria":
+        chroms = [chrom for chrom in chroms if "chrX" not in str(chrom)]
+        
+    return expand(
+        rules.quilt_ligate_mspbwt.output.vcf, 
+        chrom=chroms, 
+        size=wildcards.size, 
+        depth=wildcards.depth 
+    )
+
+#def get_quilt_genome_inputs(wildcards):
+ #   return expand(rules.quilt_ligate_mspbwt.output.vcf, chrom=config["chroms"], size=wildcards.size, depth=wildcards.depth )
 
 def collect_quilt_regular_logs(wildcards):
     d = get_refpanel_chunks(wildcards.chrom)
