@@ -355,12 +355,8 @@ def get_refpanel_chunks(chrom):
 
 def get_refpanel_chunk_region(chrom, chunkid):
     """use GLIMPSE_chunk if defined, otherwise split the chromosome by chunks"""
-    d = get_refpanel_chunks(chrom)
-    # New logic to handle glimpse2 chunking of chrX non-par
-    if "chrX" in str(chrom):
-        return d[int(chunkid)]
-
     extra_buffer_in_panel = 1000000
+    d = get_refpanel_chunks(chrom)
     tmp2 = d[int(chunkid)].split(":")
     rg = tmp2[1].split("-")
     ps = max(int(rg[0]) - extra_buffer_in_panel, 1)
