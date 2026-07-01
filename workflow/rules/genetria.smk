@@ -122,25 +122,38 @@ rule genetria_stats_for_het_homalt:
     input:
         vcf=rules.genetria_merge_historic.output.merged_vcf
     output:
-        stats=os.path.join(OUTDIR_GENETRIA, "refsize{size}", "qcs", f"{config['run_name']}_down{{depth}}x_sample_stats.txt"),
-        ratios=os.path.join(OUTDIR_GENETRIA, "refsize{size}", "qcs", f"{config['run_name']}_down{{depth}}x_clean_ratios.tsv")
+        stats=os.path.join(OUTDIR_GENETRIA,
+            "refsize{size}",
+            "qcs",
+            f"{config['run_name']}_down{{depth}}x_sample_stats.txt"),
+        ratios=os.path.join(OUTDIR_GENETRIA,
+            "refsize{size}",
+            "qcs",
+            f"{config['run_name']}_down{{depth}}x_clean_ratios.tsv")
     log:
-        os.path.join(OUTDIR_GENETRIA, "refsize{size}", "qcs", f"{config['run_name']}_down{{depth}}x_clean_ratios.tsv.log")
+        os.path.join(OUTDIR_GENETRIA,
+            "refsize{size}",
+            "qcs",
+            f"{config['run_name']}_down{{depth}}x_clean_ratios.tsv.log")
     conda:
         "../envs/quilt.yaml"
     shell:
-        r"""
+        """
         (
-        echo "Calculating mixed-run allele metrics..."
+        echo "Running bcftools stats"
         bcftools stats -s - {input.vcf} > {output.stats}
 
-        echo -e "Sample_ID\tnRefHom\tnHomAlt(1/1)\tHeterozygous(0/1)\tRatio(Het/Hom-Alt)" > {output.ratios}
-        
-        grep "^PSC" {output.stats} | \
-        awk -F'\t' '{
-            if ($5 == 0) { ratio = 0 } else { ratio = $6/$5 }
-            printf "%s\t%s\t%s\t%s\t%.2f\n", $3, $4, $5, $6, ratio
-        }' >> {output.ratios}
+        # 1. Create the file and write the correct headers
+        echo -e "Sample_ID\\tnRefHom\tnHomAlt(1/1)\\tHeterozygous(0/1)\\tRatio(Het/Hom-Alt)" > {output.ratios}
+      
+        echo "Calculating ratios."
+        # 2. Extract the data, calculate the ratio, and append it to the file
+        grep "^PSC" {output.stats} | awk -F'\\t' '{{
+            if ($5 == 0) {{ ratio = 0 }} else {{ ratio = $6/$5 }}
+            printf "%s\\t%s\\t%s\\t%s\\t%.2f\\n", $3, $4, $5, $6, ratio
+        }}' >> {output.ratios}
+
+         echo "Job finished successfully!"
         ) &>> {log}
         """
 
